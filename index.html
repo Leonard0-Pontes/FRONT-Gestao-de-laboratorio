@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestão de Laboratórios - Frontend</title>
+  <!-- Bootstrap 5 CDN -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <style>
+    body { background: #f8f9fa; padding-top: 20px; }
+    .login-box { max-width: 400px; margin: 80px auto; }
+    .tab-content { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 0.125rem 0.25rem rgba(0,0,0,0.075); }
+    .user-info { background: #e9ecef; padding: 10px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .btn-sm { margin: 2px; }
+    .filtros { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 15px; }
+    .small-note { font-size: 0.875rem; color: #6c757d; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- TELA DE LOGIN (FAKE) -->
+  <div id="loginContainer" class="login-box">
+    <div class="card shadow">
+      <div class="card-body">
+        <h2 class="card-title text-center">🔐 Login (fake)</h2>
+        <p class="text-muted text-center">Digite qualquer coisa e clique em Entrar</p>
+        <input type="text" id="loginNome" class="form-control mb-2" placeholder="Nome (qualquer)" value="Admin Teste" />
+        <input type="email" id="loginEmail" class="form-control mb-2" placeholder="E-mail (qualquer)" value="admin@teste.com" />
+        <input type="password" id="loginSenha" class="form-control mb-3" placeholder="Senha (qualquer)" value="123" />
+        <button id="loginBtn" class="btn btn-primary w-100">Entrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- APLICAÇÃO (visível após login falso) -->
+  <div id="appContainer" style="display:none;">
+
+    <!-- Barra do usuário -->
+    <div class="user-info mb-3">
+      <span>👤 <strong id="displayUser">Usuário</strong></span>
+      <button id="logoutBtn" class="btn btn-danger btn-sm">Sair</button>
+    </div>
+
+    <!-- Abas (nav-tabs) -->
+    <ul class="nav nav-tabs mb-3" id="myTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="lab-tab" data-bs-toggle="tab" data-bs-target="#lab" type="button" role="tab">Laboratórios</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="equip-tab" data-bs-toggle="tab" data-bs-target="#equip" type="button" role="tab">Equipamentos</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="reserva-tab" data-bs-toggle="tab" data-bs-target="#reserva" type="button" role="tab">Reservas</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="emprestimo-tab" data-bs-toggle="tab" data-bs-target="#emprestimo" type="button" role="tab">Empréstimos</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="usuario-tab" data-bs-toggle="tab" data-bs-target="#usuario" type="button" role="tab">Usuários</button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+
+      <!-- LABORATÓRIOS -->
+      <div class="tab-pane fade show active" id="lab" role="tabpanel">
+        <h3>🧪 Laboratórios</h3>
+        <div class="filtros">
+          <input type="text" id="labFiltroStatus" class="form-control form-control-sm w-auto" placeholder="Status (ex: Disponível)" />
+          <button id="labFiltrarBtn" class="btn btn-secondary btn-sm">Filtrar</button>
+          <button id="labLimparFiltroBtn" class="btn btn-outline-secondary btn-sm">Limpar</button>
+        </div>
+        <form id="labForm" class="row g-2 align-items-end mb-3">
+          <div class="col-auto"><label class="form-label">Nome <input type="text" id="labNome" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">N° ID <input type="text" id="labNumId" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Localização <input type="text" id="labLocalizacao" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Descrição <input type="text" id="labDescricao" class="form-control form-control-sm" /></label></div>
+          <div class="col-auto"><label class="form-label">Status
+            <select id="labStatus" class="form-select form-select-sm">
+              <option value="Disponível">Disponível</option>
+              <option value="Reservado">Reservado</option>
+              <option value="Ocupado">Ocupado</option>
+            </select>
+          </label></div>
+          <div class="col-auto">
+            <button type="submit" id="labSubmitBtn" class="btn btn-success btn-sm">Criar</button>
+            <button type="button" class="btn btn-danger btn-sm" id="labCancelEditBtn" style="display:none;">Cancelar Edição</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered table-hover">
+            <thead><tr><th>ID</th><th>Nome</th><th>N°</th><th>Local</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="labBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EQUIPAMENTOS -->
+      <div class="tab-pane fade" id="equip" role="tabpanel">
+        <h3>🛠️ Equipamentos</h3>
+        <div class="filtros">
+          <input type="text" id="equipFiltroStatus" class="form-control form-control-sm w-auto" placeholder="Status" />
+          <button id="equipFiltrarBtn" class="btn btn-secondary btn-sm">Filtrar</button>
+          <button id="equipLimparFiltroBtn" class="btn btn-outline-secondary btn-sm">Limpar</button>
+        </div>
+        <form id="equipForm" class="row g-2 align-items-end mb-3">
+          <div class="col-auto"><label class="form-label">Nome <input type="text" id="equipNome" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Descrição <input type="text" id="equipDescricao" class="form-control form-control-sm" /></label></div>
+          <div class="col-auto"><label class="form-label">ID Lab <input type="text" id="equipIdLab" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Status
+            <select id="equipStatus" class="form-select form-select-sm">
+              <option value="Disponível">Disponível</option>
+              <option value="Reservado">Reservado</option>
+              <option value="Ocupado">Ocupado</option>
+            </select>
+          </label></div>
+          <div class="col-auto"><label class="form-label">Imagem <input type="file" id="equipImagem" class="form-control form-control-sm" accept="image/*" /></label></div>
+          <div class="col-auto">
+            <button type="submit" id="equipSubmitBtn" class="btn btn-success btn-sm">Criar</button>
+            <button type="button" class="btn btn-danger btn-sm" id="equipCancelEditBtn" style="display:none;">Cancelar Edição</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered table-hover">
+            <thead><tr><th>ID</th><th>Nome</th><th>Status</th><th>Lab</th><th>Imagem</th><th>Ações</th></tr></thead>
+            <tbody id="equipBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RESERVAS -->
+      <div class="tab-pane fade" id="reserva" role="tabpanel">
+        <h3>📅 Reservas</h3>
+        <form id="reservaForm" class="row g-2 align-items-end mb-3">
+          <div class="col-auto"><label class="form-label">Equipamento ID <input type="number" id="reservaEquipId" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Data Início <input type="datetime-local" id="reservaInicio" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Data Fim <input type="datetime-local" id="reservaFim" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto">
+            <button type="submit" id="reservaSubmitBtn" class="btn btn-success btn-sm">Criar</button>
+            <button type="button" class="btn btn-danger btn-sm" id="reservaCancelEditBtn" style="display:none;">Cancelar</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered table-hover">
+            <thead><tr><th>ID</th><th>Usuário</th><th>Equip.</th><th>Início</th><th>Fim</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="reservaBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EMPRÉSTIMOS -->
+      <div class="tab-pane fade" id="emprestimo" role="tabpanel">
+        <h3>📦 Empréstimos</h3>
+        <form id="emprestimoForm" class="row g-2 align-items-end mb-3">
+          <div class="col-auto"><label class="form-label">Equipamento ID <input type="number" id="empEquipId" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Data Prevista <input type="datetime-local" id="empDataPrevista" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto">
+            <button type="submit" id="empSubmitBtn" class="btn btn-success btn-sm">Criar</button>
+            <button type="button" class="btn btn-danger btn-sm" id="empCancelEditBtn" style="display:none;">Cancelar</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered table-hover">
+            <thead><tr><th>ID</th><th>Usuário</th><th>Equip.</th><th>Prevista</th><th>Devolução</th><th>Status</th><th>Ações</th></tr></thead>
+            <tbody id="emprestimoBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- USUÁRIOS -->
+      <div class="tab-pane fade" id="usuario" role="tabpanel">
+        <h3>👥 Usuários</h3>
+        <p class="small-note">Para criar/editar/excluir, informe o ID do operador (admin) no campo abaixo.</p>
+        <div class="mb-2">
+          <label class="form-label">ID do Operador (admin): <input type="text" id="operadorId" class="form-control form-control-sm w-auto d-inline-block" placeholder="Ex: 1" value="1" /></label>
+        </div>
+        <form id="usuarioForm" class="row g-2 align-items-end mb-3">
+          <div class="col-auto"><label class="form-label">Nome <input type="text" id="userNome" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Email <input type="email" id="userEmail" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Senha <input type="text" id="userSenha" class="form-control form-control-sm" required /></label></div>
+          <div class="col-auto"><label class="form-label">Role
+            <select id="userRole" class="form-select form-select-sm">
+              <option value="comum">comum</option>
+              <option value="admin">admin</option>
+            </select>
+          </label></div>
+          <div class="col-auto">
+            <button type="submit" id="userSubmitBtn" class="btn btn-success btn-sm">Criar</button>
+            <button type="button" class="btn btn-danger btn-sm" id="userCancelEditBtn" style="display:none;">Cancelar</button>
+          </div>
+        </form>
+        <div class="table-responsive">
+          <table class="table table-striped table-bordered table-hover">
+            <thead><tr><th>ID</th><th>Nome</th><th>Email</th><th>Role</th><th>Ações</th></tr></thead>
+            <tbody id="usuarioBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div><!-- /tab-content -->
+  </div><!-- /appContainer -->
+</div><!-- /container -->
+
+<!-- Bootstrap JS (para as abas funcionarem) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  // ============================================================
+  // CONFIGURAÇÃO
+  // ============================================================
+  const API_URL = 'http://localhost:3000';
+  let currentUser = null;
+  let editingId = null;
+  let editingResource = null;
+
+  function getHeaders() {
+    return { 'Content-Type': 'application/json' };
+  }
+
+  function getOperadorId() {
+    return document.getElementById('operadorId').value.trim() || null;
+  }
+
+  async function fetchAPI(endpoint, options = {}) {
+    const url = endpoint.startsWith('http') ? endpoint : `${API_URL}${endpoint}`;
+    const resp = await fetch(url, options);
+    if (!resp.ok) {
+      let msg = await resp.text();
+      try { msg = JSON.parse(msg); msg = msg.message || msg.error || msg; } catch(e) {}
+      throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+    }
+    const contentType = resp.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return resp.json();
+    }
+    return resp.text();
+  }
+
+  // ============================================================
+  // LOGIN FAKE
+  // ============================================================
+  document.getElementById('loginBtn').addEventListener('click', () => {
+    const nome = document.getElementById('loginNome').value || 'Usuário';
+    const email = document.getElementById('loginEmail').value || 'usuario@teste.com';
+    currentUser = { id: '99', nome, email, role: 'admin' };
+    document.getElementById('displayUser').textContent = `${currentUser.nome} (${currentUser.email})`;
+    document.getElementById('loginContainer').style.display = 'none';
+    document.getElementById('appContainer').style.display = 'block';
+    carregarLaboratorios();
+    carregarEquipamentos();
+    carregarReservas();
+    carregarEmprestimos();
+    carregarUsuarios();
+  });
+
+  document.getElementById('logoutBtn').addEventListener('click', () => {
+    currentUser = null;
+    document.getElementById('appContainer').style.display = 'none';
+    document.getElementById('loginContainer').style.display = 'block';
+  });
+
+  // ============================================================
+  // LABORATÓRIOS
+  // ============================================================
+  async function carregarLaboratorios(filtroStatus = '') {
+    try {
+      let url = '/laboratorio';
+      const params = new URLSearchParams();
+      if (filtroStatus) params.append('status', filtroStatus);
+      const query = params.toString();
+      if (query) url += '?' + query;
+      const data = await fetchAPI(url);
+      const tbody = document.getElementById('labBody');
+      tbody.innerHTML = data.map(lab => `
+        <tr>
+          <td>${lab.id}</td>
+          <td>${lab.nome}</td>
+          <td>${lab.num_id}</td>
+          <td>${lab.localizacao}</td>
+          <td>${lab.status}</td>
+          <td>
+            <button class="btn btn-warning btn-sm" onclick="editarLaboratorio(${lab.id})">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirLaboratorio(${lab.id})">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      alert('Erro ao carregar laboratórios: ' + err.message);
+    }
+  }
+
+  document.getElementById('labFiltrarBtn').addEventListener('click', () => {
+    const status = document.getElementById('labFiltroStatus').value.trim();
+    carregarLaboratorios(status);
+  });
+  document.getElementById('labLimparFiltroBtn').addEventListener('click', () => {
+    document.getElementById('labFiltroStatus').value = '';
+    carregarLaboratorios();
+  });
+
+  async function enviarLaboratorio(dados, id = null) {
+    const method = id ? 'PATCH' : 'POST';
+    const url = id ? `/laboratorio/${id}` : '/laboratorio';
+    await fetchAPI(url, { method, headers: getHeaders(), body: JSON.stringify(dados) });
+    carregarLaboratorios();
+    resetLabForm();
+  }
+
+  function resetLabForm() {
+    document.getElementById('labForm').reset();
+    document.getElementById('labSubmitBtn').textContent = 'Criar';
+    document.getElementById('labCancelEditBtn').style.display = 'none';
+    editingId = null;
+    editingResource = null;
+  }
+
+  function editarLaboratorio(id) {
+    const tr = document.querySelector(`#labBody tr:nth-child(${Array.from(document.querySelectorAll('#labBody tr')).findIndex(tr => tr.cells[0].textContent == id) + 1})`);
+    if (!tr) return;
+    const cells = tr.cells;
+    document.getElementById('labNome').value = cells[1].textContent;
+    document.getElementById('labNumId').value = cells[2].textContent;
+    document.getElementById('labLocalizacao').value = cells[3].textContent;
+    document.getElementById('labDescricao').value = '';
+    document.getElementById('labStatus').value = cells[4].textContent;
+    document.getElementById('labSubmitBtn').textContent = 'Atualizar';
+    document.getElementById('labCancelEditBtn').style.display = 'inline-block';
+    editingId = id;
+    editingResource = 'lab';
+  }
+
+  document.getElementById('labCancelEditBtn').addEventListener('click', resetLabForm);
+
+  document.getElementById('labForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+      nome: document.getElementById('labNome').value,
+      num_id: document.getElementById('labNumId').value,
+      localizacao: document.getElementById('labLocalizacao').value,
+      descricao: document.getElementById('labDescricao').value || undefined,
+      status: document.getElementById('labStatus').value,
+    };
+    try {
+      await enviarLaboratorio(dados, editingResource === 'lab' ? editingId : null);
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  });
+
+  async function excluirLaboratorio(id) {
+    if (!confirm('Excluir laboratório ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/laboratorio/${id}`, { method: 'DELETE' });
+      carregarLaboratorios();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  // ============================================================
+  // EQUIPAMENTOS (mesma lógica, apenas com Bootstrap)
+  // ============================================================
+  async function carregarEquipamentos(filtroStatus = '') {
+    try {
+      let url = '/equipamento';
+      const params = new URLSearchParams();
+      if (filtroStatus) params.append('status', filtroStatus);
+      const query = params.toString();
+      if (query) url += '?' + query;
+      const data = await fetchAPI(url);
+      const tbody = document.getElementById('equipBody');
+      tbody.innerHTML = data.map(eq => `
+        <tr>
+          <td>${eq.id}</td>
+          <td>${eq.nome}</td>
+          <td>${eq.status}</td>
+          <td>${eq.idLab}</td>
+          <td>${eq.imagem ? '📷' : '-'}</td>
+          <td>
+            <button class="btn btn-warning btn-sm" onclick="editarEquipamento(${eq.id})">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirEquipamento(${eq.id})">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      alert('Erro ao carregar equipamentos: ' + err.message);
+    }
+  }
+
+  document.getElementById('equipFiltrarBtn').addEventListener('click', () => {
+    const status = document.getElementById('equipFiltroStatus').value.trim();
+    carregarEquipamentos(status);
+  });
+  document.getElementById('equipLimparFiltroBtn').addEventListener('click', () => {
+    document.getElementById('equipFiltroStatus').value = '';
+    carregarEquipamentos();
+  });
+
+  async function enviarEquipamento(dados, id = null, imagem = null) {
+    const method = id ? 'PATCH' : 'POST';
+    let url = id ? `/equipamento/${id}` : '/equipamento';
+    if (imagem && !id) {
+      url = '/equipamento/com-arquivo';
+      const formData = new FormData();
+      Object.keys(dados).forEach(key => formData.append(key, dados[key]));
+      formData.append('imagem', imagem);
+      const resp = await fetch(API_URL + url, { method: 'POST', body: formData });
+      if (!resp.ok) throw new Error(await resp.text());
+      return resp.json();
+    } else {
+      return fetchAPI(url, { method, headers: getHeaders(), body: JSON.stringify(dados) });
+    }
+  }
+
+  function resetEquipForm() {
+    document.getElementById('equipForm').reset();
+    document.getElementById('equipSubmitBtn').textContent = 'Criar';
+    document.getElementById('equipCancelEditBtn').style.display = 'none';
+    editingId = null;
+    editingResource = null;
+  }
+
+  function editarEquipamento(id) {
+    const tr = document.querySelector(`#equipBody tr:nth-child(${Array.from(document.querySelectorAll('#equipBody tr')).findIndex(tr => tr.cells[0].textContent == id) + 1})`);
+    if (!tr) return;
+    const cells = tr.cells;
+    document.getElementById('equipNome').value = cells[1].textContent;
+    document.getElementById('equipDescricao').value = '';
+    document.getElementById('equipIdLab').value = cells[3].textContent;
+    document.getElementById('equipStatus').value = cells[2].textContent;
+    document.getElementById('equipSubmitBtn').textContent = 'Atualizar';
+    document.getElementById('equipCancelEditBtn').style.display = 'inline-block';
+    editingId = id;
+    editingResource = 'equip';
+  }
+
+  document.getElementById('equipCancelEditBtn').addEventListener('click', resetEquipForm);
+
+  document.getElementById('equipForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+      nome: document.getElementById('equipNome').value,
+      descricao: document.getElementById('equipDescricao').value || undefined,
+      idLab: document.getElementById('equipIdLab').value,
+      status: document.getElementById('equipStatus').value,
+    };
+    const imagemFile = document.getElementById('equipImagem').files[0];
+    try {
+      if (imagemFile && !editingId) {
+        await enviarEquipamento(dados, null, imagemFile);
+      } else {
+        await enviarEquipamento(dados, editingResource === 'equip' ? editingId : null);
+      }
+      carregarEquipamentos();
+      resetEquipForm();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  });
+
+  async function excluirEquipamento(id) {
+    if (!confirm('Excluir equipamento ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/equipamento/${id}`, { method: 'DELETE' });
+      carregarEquipamentos();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  // ============================================================
+  // RESERVAS (com Bootstrap)
+  // ============================================================
+  async function carregarReservas() {
+    try {
+      const data = await fetchAPI('/reservas');
+      const tbody = document.getElementById('reservaBody');
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td>${r.id}</td>
+          <td>${r.usuarioId}</td>
+          <td>${r.equipamentoId}</td>
+          <td>${new Date(r.dataInicio).toLocaleString()}</td>
+          <td>${new Date(r.dataFim).toLocaleString()}</td>
+          <td>${r.status}</td>
+          <td>
+            ${r.status === 'Aprovada' ? `<button class="btn btn-warning btn-sm" onclick="cancelarReserva(${r.id})">Cancelar</button>` : ''}
+            ${r.status === 'Aprovada' ? `<button class="btn btn-info btn-sm" onclick="concluirReserva(${r.id})">Concluir</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="excluirReserva(${r.id})">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      alert('Erro ao carregar reservas: ' + err.message);
+    }
+  }
+
+  function resetReservaForm() {
+    document.getElementById('reservaForm').reset();
+    document.getElementById('reservaSubmitBtn').textContent = 'Criar';
+    document.getElementById('reservaCancelEditBtn').style.display = 'none';
+    editingId = null;
+    editingResource = null;
+  }
+
+  document.getElementById('reservaCancelEditBtn').addEventListener('click', resetReservaForm);
+
+  document.getElementById('reservaForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+      equipamentoId: parseInt(document.getElementById('reservaEquipId').value),
+      dataInicio: document.getElementById('reservaInicio').value,
+      dataFim: document.getElementById('reservaFim').value,
+    };
+    try {
+      await fetchAPI('/reservas', { method: 'POST', headers: getHeaders(), body: JSON.stringify(dados) });
+      carregarReservas();
+      resetReservaForm();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  });
+
+  async function cancelarReserva(id) {
+    if (!confirm('Cancelar reserva ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/reservas/${id}/cancelar`, { method: 'PATCH' });
+      carregarReservas();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  async function concluirReserva(id) {
+    if (!confirm('Concluir reserva ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/reservas/${id}/concluir`, { method: 'PATCH' });
+      carregarReservas();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  async function excluirReserva(id) {
+    if (!confirm('Excluir reserva ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/reservas/${id}`, { method: 'DELETE' });
+      carregarReservas();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  // ============================================================
+  // EMPRÉSTIMOS (com Bootstrap)
+  // ============================================================
+  async function carregarEmprestimos() {
+    try {
+      const data = await fetchAPI('/emprestimos');
+      const tbody = document.getElementById('emprestimoBody');
+      tbody.innerHTML = data.map(e => `
+        <tr>
+          <td>${e.id}</td>
+          <td>${e.usuarioId}</td>
+          <td>${e.equipamentoId}</td>
+          <td>${new Date(e.dataPrevista).toLocaleString()}</td>
+          <td>${e.dataDevolucao ? new Date(e.dataDevolucao).toLocaleString() : '-'}</td>
+          <td>${e.status}</td>
+          <td>
+            ${e.status === 'Aguardando' ? `<button class="btn btn-success btn-sm" onclick="aprovarEmprestimo(${e.id})">Aprovar</button>` : ''}
+            ${e.status === 'Aprovado' ? `<button class="btn btn-primary btn-sm" onclick="devolverEmprestimo(${e.id})">Devolver</button>` : ''}
+            <button class="btn btn-danger btn-sm" onclick="excluirEmprestimo(${e.id})">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      alert('Erro ao carregar empréstimos: ' + err.message);
+    }
+  }
+
+  function resetEmprestimoForm() {
+    document.getElementById('emprestimoForm').reset();
+    document.getElementById('empSubmitBtn').textContent = 'Criar';
+    document.getElementById('empCancelEditBtn').style.display = 'none';
+    editingId = null;
+    editingResource = null;
+  }
+
+  document.getElementById('empCancelEditBtn').addEventListener('click', resetEmprestimoForm);
+
+  document.getElementById('emprestimoForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+      equipamentoId: parseInt(document.getElementById('empEquipId').value),
+      dataPrevista: document.getElementById('empDataPrevista').value,
+    };
+    try {
+      await fetchAPI('/emprestimos', { method: 'POST', headers: getHeaders(), body: JSON.stringify(dados) });
+      carregarEmprestimos();
+      resetEmprestimoForm();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  });
+
+  async function aprovarEmprestimo(id) {
+    if (!confirm('Aprovar empréstimo ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/emprestimos/${id}/aprovar`, { method: 'PATCH' });
+      carregarEmprestimos();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  async function devolverEmprestimo(id) {
+    if (!confirm('Registrar devolução do empréstimo ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/emprestimos/${id}/devolver`, { method: 'PATCH' });
+      carregarEmprestimos();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  async function excluirEmprestimo(id) {
+    if (!confirm('Excluir empréstimo ID '+id+'?')) return;
+    try {
+      await fetchAPI(`/emprestimos/${id}`, { method: 'DELETE' });
+      carregarEmprestimos();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+
+  // ============================================================
+  // USUÁRIOS (com Bootstrap)
+  // ============================================================
+  async function carregarUsuarios() {
+    try {
+      const data = await fetchAPI('/usuarios');
+      const tbody = document.getElementById('usuarioBody');
+      tbody.innerHTML = data.map(u => `
+        <tr>
+          <td>${u.id}</td>
+          <td>${u.nome}</td>
+          <td>${u.email}</td>
+          <td>${u.role}</td>
+          <td>
+            <button class="btn btn-warning btn-sm" onclick="editarUsuario('${u.id}')">Editar</button>
+            <button class="btn btn-danger btn-sm" onclick="excluirUsuario('${u.id}')">Excluir</button>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      alert('Erro ao carregar usuários: ' + err.message);
+    }
+  }
+
+  function resetUsuarioForm() {
+    document.getElementById('usuarioForm').reset();
+    document.getElementById('userSubmitBtn').textContent = 'Criar';
+    document.getElementById('userCancelEditBtn').style.display = 'none';
+    editingId = null;
+    editingResource = null;
+  }
+
+  document.getElementById('userCancelEditBtn').addEventListener('click', resetUsuarioForm);
+
+  document.getElementById('usuarioForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dados = {
+      nome: document.getElementById('userNome').value,
+      email: document.getElementById('userEmail').value,
+      senha: document.getElementById('userSenha').value,
+      role: document.getElementById('userRole').value,
+    };
+    const operador = getOperadorId();
+    if (!operador) { alert('Informe o ID do operador (admin) para esta ação.'); return; }
+    try {
+      const method = editingResource === 'usuario' && editingId ? 'PATCH' : 'POST';
+      const url = editingResource === 'usuario' && editingId ? `/usuarios/${editingId}` : '/usuarios';
+      await fetchAPI(url, {
+        method,
+        headers: { ...getHeaders(), 'x-operador-id': operador },
+        body: JSON.stringify(dados),
+      });
+      carregarUsuarios();
+      resetUsuarioForm();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  });
+
+  function editarUsuario(id) {
+    const tr = document.querySelector(`#usuarioBody tr:nth-child(${Array.from(document.querySelectorAll('#usuarioBody tr')).findIndex(tr => tr.cells[0].textContent == id) + 1})`);
+    if (!tr) return;
+    const cells = tr.cells;
+    document.getElementById('userNome').value = cells[1].textContent;
+    document.getElementById('userEmail').value = cells[2].textContent;
+    document.getElementById('userSenha').value = '';
+    document.getElementById('userRole').value = cells[3].textContent;
+    document.getElementById('userSubmitBtn').textContent = 'Atualizar';
+    document.getElementById('userCancelEditBtn').style.display = 'inline-block';
+    editingId = id;
+    editingResource = 'usuario';
+  }
+
+  async function excluirUsuario(id) {
+    if (!confirm('Excluir usuário ID '+id+'?')) return;
+    const operador = getOperadorId();
+    if (!operador) { alert('Informe o ID do operador (admin) para excluir.'); return; }
+    try {
+      await fetchAPI(`/usuarios/${id}`, { method: 'DELETE', headers: { 'x-operador-id': operador } });
+      carregarUsuarios();
+    } catch (err) {
+      alert('Erro: ' + err.message);
+    }
+  }
+</script>
+</body>
+</html>
